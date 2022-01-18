@@ -1,6 +1,7 @@
 import os
 
-from keras.layers import Conv2D
+from keras.applications.densenet import layers
+from keras.layers import Conv2D, MaxPooling2D
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -18,21 +19,27 @@ def make_model(input_shape):
     # model.add(Dense(units=64, activation="relu"))
     # model.add(Dense(units=12, activation="softmax"))
 
-    model.add(Conv2D(filters=4, kernel_size=(3,3), activation="relu", input_shape=input_shape))
-    model.add(Conv2D(filters=4, kernel_size=(3,3), activation="relu",))
-    model.add(Conv2D(filters=8, kernel_size=(3,3), activation="relu",))
-    model.add(Conv2D(filters=8, kernel_size=(3,3), activation="relu",))
-    model.add(Conv2D(filters=16, kernel_size=(3,3), activation="relu",))
-    model.add(Conv2D(filters=16, kernel_size=(3,3), activation="relu",))
+    data_augmentation = tf.keras.Sequential(
+        [
+            layers.RandomFlip("horizontal",
+                              input_shape=(180,
+                                           180,
+                                           3)),
+            layers.RandomRotation(0.1),
+            layers.RandomZoom(0.1),
+        ]
+    )
+
+    model.add(data_augmentation)
+    model.add(Conv2D(filters=16, kernel_size=(3,3), activation="relu", input_shape=input_shape))
+    model.add(MaxPooling2D())
     model.add(Conv2D(filters=32, kernel_size=(3,3), activation="relu",))
-    model.add(Conv2D(filters=32, kernel_size=(3,3), activation="relu",))
+    model.add(MaxPooling2D())
     model.add(Conv2D(filters=64, kernel_size=(3,3), activation="relu",))
-    model.add(Conv2D(filters=64, kernel_size=(3,3), activation="relu",))
-    model.add(Conv2D(filters=128, kernel_size=(3,3), activation="relu",))
-    model.add(Conv2D(filters=128, kernel_size=(3,3), activation="relu",))
+    model.add(MaxPooling2D())
     model.add(Flatten())
-    model.add(Dense(units=256, activation="relu"))
-    model.add(Dense(units=12, activation="softmax"))
+    model.add(Dense(units=128, activation="relu"))
+    model.add(Dense(units=12))
 
     model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 
@@ -47,11 +54,11 @@ def main():
 
     #flow_images_from_directory
     image_generator = ImageDataGenerator()
-    train_generator = image_generator.flow_from_directory(input_directory+"train/", target_size=(96,96), batch_size=256, class_mode="binary")
-    test_generator = image_generator.flow_from_directory(input_directory+"test/", target_size=(96,96), batch_size=256, class_mode="binary", shuffle=False)
+    train_generator = image_generator.flow_from_directory(input_directory+"train/", target_size=(180,180), batch_size=256, class_mode="binary")
+    test_generator = image_generator.flow_from_directory(input_directory+"test/", target_size=(180,180), batch_size=256, class_mode="binary", shuffle=False)
 
     output_directory = ""
-    input_shape = (96, 96, 3)
+    input_shape = (180, 180, 3)
     model = make_model(input_shape)
 
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
