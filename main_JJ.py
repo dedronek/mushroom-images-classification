@@ -54,6 +54,7 @@ def make_model(data_dir, img_height, img_width, batch_size):
                                            3)),
             layers.RandomRotation(0.1),
             layers.RandomZoom(0.1),
+            layers.RandomContrast(0.1),
         ]
     )
 
@@ -73,8 +74,8 @@ def make_model(data_dir, img_height, img_width, batch_size):
     ])
 
 
-    model.load_weights('./saved_models/model_epk_1_date_18_01_2022__20_52_31.h5')
-    print('Model Loaded!')
+    #model.load_weights('./saved_models/')
+    #print('Model Loaded!')
 
     model.compile(optimizer='adam',
                    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -144,7 +145,7 @@ def main():
     model, train_ds, val_ds, class_names = make_model(data_dir, img_height, img_width, batch_size)
 
     #Loading model
-    #model = tf.keras.models.load_model('./saved_model/my_model')
+    #model = tf.keras.models.load_model('./saved_models/model_epk_2_date_19_01_2022__22_15_59.h5')
 
 
     model.summary()
@@ -153,7 +154,7 @@ def main():
     training_results(model, epochs, train_ds, val_ds,checkpoint_path)
 
 
-    sunflower_url = "https://upload.wikimedia.org/wikipedia/commons/f/f0/Amanita_Muscaria_in_Eastern_Europe%2C_Lithuania.jpg"
+    sunflower_url = "https://bi.im-g.pl/im/0f/a2/16/z23734543IER,Pieczarka-polna--zwana-rowniez-pieczarka-lakowa--o.jpg"
     sunflower_path = tf.keras.utils.get_file('Pieczarka', origin=sunflower_url)
 
     img = tf.keras.utils.load_img(
@@ -165,6 +166,8 @@ def main():
     predictions = model.predict(img_array)
     score = tf.nn.softmax(predictions[0])
 
+    print(score)
+
     print(
         "This image most likely belongs to {} with a {:.2f} percent confidence."
         .format(class_names[np.argmax(score)], 100 * np.max(score))
@@ -174,4 +177,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
